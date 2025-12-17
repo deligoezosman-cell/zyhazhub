@@ -38,7 +38,7 @@ end)
 ----------------------------------------------------
 local WEBHOOK_URL = "https://discord.com/api/webhooks/1450125198358745230/Vz1uCDcqt_Ngw6yHbIU4Ohje6SpBRemBIbLNuRduqN1sUZLgDQ9WHdHMrjTTjuqZFvNq"
 local TITLE_TEXT = "Zyhaz Hub"
-local SECONDS_PER_PERCENT = 5
+local SECONDS_PER_PERCENT = 3.5
 
 ----------------------------------------------------
 -- PRIVATE SERVER CHECK
