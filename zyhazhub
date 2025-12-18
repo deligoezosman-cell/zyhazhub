@@ -36,7 +36,7 @@ end)
 ----------------------------------------------------
 -- SETTINGS
 ----------------------------------------------------
-local WEBHOOK_URL = "https://discord.com/api/webhooks/1450125198358745230/Vz1uCDcqt_Ngw6yHbIU4Ohje6SpBRemBIbLNuRduqN1sUZLgDQ9WHdHMrjTTjuqZFvNq"
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1451199591599837308/WZESlOWGSi2uUrlebj-Cl4q-ZDjGvVY8ycYwA_6SFWpyEc5oDht549vjNZ7VEThqhvMR"
 local TITLE_TEXT = "Zyhaz Hub"
 local SECONDS_PER_PERCENT = 3.5
 
